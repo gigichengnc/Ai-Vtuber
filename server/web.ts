@@ -23,8 +23,9 @@ const MIME: Record<string, string> = {
 
 /** Serves a file from inside `dir`; refuses paths that escape it. */
 export function serveFromDir(res: ServerResponse, dir: string, relative: string): void {
-  const file = resolve(dir, `.${relative.startsWith("/") ? relative : `/${relative}`}`);
-  if (!file.startsWith(dir + sep)) {
+  const base = resolve(dir);
+  const file = resolve(base, `.${relative.startsWith("/") ? relative : `/${relative}`}`);
+  if (!file.startsWith(base + sep)) {
     res.writeHead(403).end();
     return;
   }
