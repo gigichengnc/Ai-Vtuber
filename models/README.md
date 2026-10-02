@@ -18,3 +18,8 @@ models/
 
 Then make sure `model` in `config/avatar.json` points at the `.model3.json` file
 (`/models/zhaomu/朝暮_v6.model3.json` for the layout above).
+
+## Kokoro voice files (optional)
+
+If you use the offline Kokoro voice (see the main README), put
+`kokoro-v1.0.int8.onnx` and `voices-v1.0.bin` in `models/kokoro/`.

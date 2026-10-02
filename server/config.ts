@@ -30,6 +30,7 @@ export const settings = {
     rate: env("TTS_RATE", "+0%"),
     pitch: env("TTS_PITCH", "+0Hz"),
     narratorVoice: env("NARRATOR_VOICE", "en-GB-RyanNeural"),
+    command: env("TTS_COMMAND"),
   },
   chatSources: (process.env.CHAT_SOURCES ?? "console")
     .split(",")

@@ -17,8 +17,8 @@ Live:   YouTube chat ─► AI brain ─► voice ─► Live2D avatar page ─�
 ```
 
 The AI can be free (a local model with Ollama, or free tiers of Gemini/Groq),
-and so can the voice (Microsoft Edge voices, or your own cloned voice with
-GPT-SoVITS). You don't need VTube Studio running: this app draws the model
+and so can the voice (Microsoft Edge voices, offline Kokoro voices, or your
+own cloned voice with GPT-SoVITS). You don't need VTube Studio running: this app draws the model
 itself.
 
 ## What you need
@@ -125,6 +125,28 @@ framings live in `config/avatar.json` under `cameras`.
   British voices: `en-GB-SoniaNeural`, `en-GB-MaisieNeural`. Chinese ones work
   too (`zh-CN-XiaoyiNeural`, `zh-TW-HsiaoChenNeural`, `zh-HK-HiuGaaiNeural`);
   change `VIDEO_LANGUAGE` and the language line in `config/persona.md` to match.
+- **Kokoro** (free, offline, runs on the CPU, no account): good British
+  voices that never change or go away. Install Python, then:
+
+  ```bash
+  pip install kokoro-onnx
+  ```
+
+  Download `kokoro-v1.0.int8.onnx` and `voices-v1.0.bin` from the
+  [kokoro-onnx model files](https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.0)
+  into `models/kokoro/`, and set in `.env`:
+
+  ```
+  TTS_PROVIDER=command
+  TTS_COMMAND=python scripts/kokoro-tts.py
+  ```
+
+  Her voice is `KOKORO_VOICE=bf_emma` (try `bf_isabella`, `bf_lily`); the
+  narrator and 晝霽 are `KOKORO_NARRATOR_VOICE=bm_george`. Each line takes a
+  few seconds, fine for videos; for live streams Edge answers faster.
+- **Any other voice program**: `TTS_PROVIDER=command` runs `TTS_COMMAND`, gives
+  it the line on stdin and expects a WAV file on stdout. It can read
+  `TTS_SPEAKER` (`main` or `narrator`) and `TTS_EMOTION` from its environment.
 - **Your own cloned voice with GPT-SoVITS** (free, on your PC): install
   [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) (it has a Windows
   package), start its API server (`api_v2.py`, port 9880), set
@@ -135,7 +157,8 @@ framings live in `config/avatar.json` under `cameras`.
 - **Only clone a voice you have the rights to**: your own, or a voice actor
   who agreed to it in writing. Never another VTuber's or anyone else's voice.
 - Narrator lines and 晝霽's short lines use `NARRATOR_VOICE` (an Edge voice;
-  `en-GB-RyanNeural` by default).
+  `en-GB-RyanNeural` by default), or the narrator voice of your
+  `TTS_COMMAND`.
 
 ## Pick a brain
 
@@ -224,7 +247,8 @@ Edits to files in `config/` apply right away, no restart needed.
 - **HTTP 429 from the AI**: you hit the free tier's limit. Raise
   `IDLE_TALK_SECONDS` or wait.
 - **Voice fails**: Edge TTS is a free, unofficial service and needs internet.
-  Set `TTS_PROVIDER=mock` to test everything else with beeps.
+  Kokoro (above) works offline. Set `TTS_PROVIDER=mock` to test everything
+  else with beeps.
 - **Video render can't start a browser**: run `npx playwright install
   chromium`, or set `BROWSER_PATH` in `.env` to Chrome or Edge.
 - **Video render fails with a WebGL error**: set `RENDER_SOFTWARE_GL=1` (slow,
