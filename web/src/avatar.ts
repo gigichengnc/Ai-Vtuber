@@ -5,6 +5,7 @@ import {
   type CubismInternalModel,
   configureCubismSDK,
   Live2DModel,
+  MotionPreloadStrategy,
   MotionPriority,
 } from "untitled-pixi-live2d-engine/cubism";
 import type { AvatarConfig } from "../../shared/protocol.ts";
@@ -22,6 +23,8 @@ export class Avatar {
   private gaze = { x: 0, y: 0, tx: 0, ty: 0, next: 1 };
   private resetTimer: ReturnType<typeof setTimeout> | undefined;
   private baseHeight = 1;
+  /** Sticker parameter index -> how visible it is now (0..1) and should be. */
+  private stickers = new Map<number, { value: number; target: number; max: number }>();
 
   /** Mouth openness 0..1, set every frame by whoever is playing audio. */
   mouth = 0;
@@ -32,8 +35,13 @@ export class Avatar {
     private app: Application,
   ) {
     this.model = model;
-    const ids = this.internal.coreModel.getModel().parameters.ids;
+    const core = this.internal.coreModel;
+    const ids = core.getModel().parameters.ids;
     ids.forEach((id, index) => this.params.set(id, index));
+    for (const id of Object.values(config.stickers ?? {})) {
+      const index = this.params.get(id);
+      if (index !== undefined) this.stickers.set(index, { value: 0, target: 0, max: core.getParameterMaximumValue(index) });
+    }
 
     // Run our procedural animation after motions/expressions but before
     // physics, so hair and accessories swing with the head movement.
@@ -45,10 +53,16 @@ export class Avatar {
     };
   }
 
-  static async load(app: Application, config: AvatarConfig): Promise<Avatar> {
+  /**
+   * `video: true` is for rendering videos: time only moves when the renderer
+   * calls `model.update()`, and all motions are loaded up front.
+   */
+  static async load(app: Application, config: AvatarConfig, { video = false } = {}): Promise<Avatar> {
     const model = await Live2DModel.from(config.model, {
       autoFocus: false, // no mouse in OBS; we move the eyes ourselves
       autoHitTest: false,
+      autoUpdate: !video,
+      motionPreload: video ? MotionPreloadStrategy.ALL : MotionPreloadStrategy.IDLE,
     });
     const avatar = new Avatar(model, config, app);
     app.stage.addChild(model);
@@ -79,11 +93,11 @@ export class Avatar {
   }
 
   /** Accepts an emotion name from config, or a raw expression name. */
-  setEmotion(name: string | undefined): void {
-    if (!name) return;
+  setEmotion(name: string | undefined): Promise<boolean> {
+    if (!name) return Promise.resolve(false);
     clearTimeout(this.resetTimer);
     const expression = this.config.emotions[name] ?? name;
-    void this.model.expression(expression);
+    return this.model.expression(expression);
   }
 
   /** Go back to the default face after `emotionHoldSeconds`. */
@@ -95,13 +109,19 @@ export class Avatar {
     );
   }
 
-  playMotion(name: string | undefined): void {
-    if (!name || name === "none") return;
-    const motion = this.config.motions[name];
-    if (!motion) return;
-    void this.model.motion(motion.group, motion.index, MotionPriority.FORCE, {
+  playMotion(name: string | undefined): Promise<boolean> {
+    const motion = name && name !== "none" ? this.config.motions[name] : undefined;
+    if (!motion) return Promise.resolve(false);
+    return this.model.motion(motion.group, motion.index, MotionPriority.FORCE, {
       resetExpression: false,
     });
+  }
+
+  /** Show one built-in sticker (fades in), or none (fades out). */
+  setSticker(name: string | undefined): void {
+    const id = name ? this.config.stickers?.[name] : undefined;
+    const active = id === undefined ? undefined : this.params.get(id);
+    for (const [index, sticker] of this.stickers) sticker.target = index === active ? 1 : 0;
   }
 
   private animate(dt: number): void {
@@ -154,6 +174,13 @@ export class Avatar {
         blink.phase = -1;
         blink.next = Math.random() < 0.15 ? 0.15 : 2 + Math.random() * 4; // sometimes a double blink
       }
+    }
+
+    // Stickers fade in quickly and out a little slower.
+    for (const [index, sticker] of this.stickers) {
+      const rate = sticker.target > sticker.value ? 12 : 6;
+      sticker.value += (sticker.target - sticker.value) * Math.min(1, dt * rate);
+      if (sticker.value > 0.001) core.setParameterValueByIndex(index, sticker.value * sticker.max);
     }
 
     // Lip sync.

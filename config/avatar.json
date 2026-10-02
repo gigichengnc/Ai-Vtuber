@@ -32,5 +32,24 @@
     "song_show": { "group": "Act", "index": 10, "description": "sway like singing" }
   },
   "loops": [{ "group": "Shark", "index": 0 }],
-  "mouth": { "parameter": "ParamMouthOpenY", "gain": 1.6, "smoothing": 0.45 }
+  "mouth": { "parameter": "ParamMouthOpenY", "gain": 1.6, "smoothing": 0.45 },
+  "stickers": {
+    "angry_mark": "ParamStkAnger",
+    "blank_eyes": "ParamStkBlank",
+    "gloom": "ParamStkGloom",
+    "heart_eyes": "ParamStkHeart",
+    "money_eyes": "ParamStkMoney",
+    "puppy_mouth": "ParamStkMuzzle",
+    "question": "ParamStkQuestion",
+    "spiral_eyes": "ParamStkSpiral",
+    "squint": "ParamStkSquint",
+    "star_eyes": "ParamStkStar",
+    "sweat": "ParamStkSweat",
+    "tears": "ParamStkTears"
+  },
+  "cameras": {
+    "wide": { "zoom": 0.9, "x": 0.5, "y": 0.53 },
+    "medium": { "zoom": 1.7, "x": 0.5, "y": 1.0 },
+    "close": { "zoom": 2.8, "x": 0.5, "y": 1.6 }
+  }
 }

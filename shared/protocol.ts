@@ -31,6 +31,10 @@ export interface AvatarConfig {
   loops: MotionRef[];
   /** Lip-sync tuning. */
   mouth: { parameter: string; gain: number; smoothing: number };
+  /** Sticker name -> model parameter that shows it (videos). */
+  stickers?: Record<string, string>;
+  /** Camera shot name -> framing (videos). Same units as `layout`. */
+  cameras?: Record<string, { zoom: number; x: number; y: number }>;
 }
 
 export type ServerToClient =

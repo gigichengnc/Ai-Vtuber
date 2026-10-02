@@ -1,0 +1,14 @@
+{
+  "gptSovits": {
+    "url": "http://127.0.0.1:9880",
+    "textLang": "zh",
+    "promptLang": "zh",
+    "speed": 1.0,
+    "refs": {
+      "default": { "audio": "D:/voices/chaomu/neutral.wav", "text": "把这里改成参考音频里说的那句话。" },
+      "happy": { "audio": "D:/voices/chaomu/happy.wav", "text": "把这里改成参考音频里说的那句话。" },
+      "angry": { "audio": "D:/voices/chaomu/angry.wav", "text": "把这里改成参考音频里说的那句话。" },
+      "sleepy": { "audio": "D:/voices/chaomu/sleepy.wav", "text": "把这里改成参考音频里说的那句话。" }
+    }
+  }
+}

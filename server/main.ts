@@ -1,10 +1,7 @@
 // Starts everything: the web server for OBS, the AI, the voice, and chat.
 //   npm start
-import { createReadStream, statSync, watch } from "node:fs";
-import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { extname, resolve, sep } from "node:path";
+import { watch } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { createServer as createViteServer } from "vite";
 import type { ClientToServer, ServerToClient } from "../shared/protocol.ts";
 import { AudioStore } from "./audio-store.ts";
 import { Brain } from "./brain.ts";
@@ -15,18 +12,7 @@ import { Hub } from "./hub.ts";
 import { Moderator } from "./moderation.ts";
 import { Stage } from "./stage.ts";
 import { createTTS } from "./tts/index.ts";
-
-const modelsDir = fileURLToPath(rootPath("models"));
-const MIME: Record<string, string> = {
-  ".json": "application/json; charset=utf-8",
-  ".moc3": "application/octet-stream",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-  ".wav": "audio/wav",
-  ".mp3": "audio/mpeg",
-};
+import { createWebServer } from "./web.ts";
 
 let avatarConfig = loadAvatarConfig();
 let persona = loadPersona();
@@ -86,63 +72,17 @@ function onClientMessage(message: ClientToServer): void {
   }
 }
 
-// ---- HTTP: model files, voice clips, and the avatar page (via Vite) ----
+// ---- HTTP: the avatar page, model files and voice clips ----
 
-function serveFile(res: ServerResponse, path: string): void {
-  try {
-    const stat = statSync(path);
-    if (!stat.isFile()) throw new Error("not a file");
-    res.writeHead(200, {
-      "Content-Type": MIME[extname(path).toLowerCase()] ?? "application/octet-stream",
-      "Content-Length": stat.size,
-      "Cache-Control": "no-cache",
-    });
-    createReadStream(path).pipe(res);
-  } catch {
-    res.writeHead(404, { "Content-Type": "text/plain" }).end("Not found");
-  }
-}
-
-function handleRequest(req: IncomingMessage, res: ServerResponse): boolean {
-  const url = new URL(req.url ?? "/", "http://localhost");
-  const path = decodeURIComponent(url.pathname);
-
-  if (path.startsWith("/audio/")) {
+const httpServer = await createWebServer({
+  handle(path, _req, res) {
+    if (!path.startsWith("/audio/")) return false;
     const clip = audio.get(path.slice("/audio/".length));
-    if (!clip) {
-      res.writeHead(404).end();
-      return true;
-    }
-    res.writeHead(200, { "Content-Type": clip.mime, "Content-Length": clip.data.length, "Cache-Control": "no-store" });
-    res.end(clip.data);
+    if (!clip) res.writeHead(404).end();
+    else res.writeHead(200, { "Content-Type": clip.mime, "Content-Length": clip.data.length, "Cache-Control": "no-store" }).end(clip.data);
     return true;
-  }
-
-  if (path.startsWith("/models/")) {
-    const file = resolve(modelsDir, `.${path.slice("/models".length)}`);
-    if (!file.startsWith(modelsDir + sep)) {
-      res.writeHead(403).end();
-      return true;
-    }
-    serveFile(res, file);
-    return true;
-  }
-
-  return false;
-}
-
-const httpServer = createServer((req, res) => {
-  if (!handleRequest(req, res)) vite.middlewares(req, res);
-});
-httpServer.on("upgrade", (req, socket, head) => {
-  hub.handleUpgrade(req, socket, head); // anything else is Vite's hot reload
-});
-
-const vite = await createViteServer({
-  configFile: fileURLToPath(rootPath("vite.config.ts")),
-  server: { middlewareMode: true, hmr: { server: httpServer } },
-  appType: "spa",
-  logLevel: "warn",
+  },
+  upgrade: (req, socket, head) => void hub.handleUpgrade(req, socket, head),
 });
 
 // ---- Reload config/ files when you edit them, no restart needed ----

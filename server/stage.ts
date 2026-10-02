@@ -150,7 +150,7 @@ export class Stage {
     this.status("speaking");
     let clip;
     try {
-      clip = await this.o.tts.synthesize(line.text);
+      clip = await this.o.tts.synthesize(line.text, { emotion: line.emotion });
     } catch (error) {
       this.o.log(`Voice (${this.o.tts.name}) failed: ${String(error)}`);
       this.status("idle");

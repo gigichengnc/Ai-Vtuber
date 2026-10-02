@@ -1,6 +1,7 @@
 // Keeps recent voice clips in memory so the avatar page can fetch them.
 import { randomBytes } from "node:crypto";
 import type { AudioClip } from "./tts/index.ts";
+import { wavSeconds } from "./tts/wav.ts";
 
 const KEEP_MS = 10 * 60_000;
 
@@ -22,6 +23,6 @@ export class AudioStore {
 
 /** Rough clip length in seconds, used as a safety timeout while she speaks. */
 export function estimateSeconds(clip: AudioClip): number {
-  if (clip.mime === "audio/wav") return Math.max(0, clip.data.length - 44) / (24_000 * 2);
+  if (clip.mime === "audio/wav") return wavSeconds(clip.data);
   return (clip.data.length * 8) / 48_000; // Edge TTS mp3 is 48 kbit/s
 }

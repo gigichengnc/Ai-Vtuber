@@ -23,11 +23,13 @@ export const settings = {
     model: env("LLM_MODEL", "qwen3:8b"),
   },
   idleTalkSeconds: number("IDLE_TALK_SECONDS", 60),
+  videoLanguage: env("VIDEO_LANGUAGE", "Simplified Chinese (简体中文)"),
   tts: {
     provider: env("TTS_PROVIDER", "edge"),
     voice: env("TTS_VOICE", "zh-CN-XiaoyiNeural"),
     rate: env("TTS_RATE", "+0%"),
     pitch: env("TTS_PITCH", "+0Hz"),
+    narratorVoice: env("NARRATOR_VOICE", "zh-CN-YunxiNeural"),
   },
   chatSources: (process.env.CHAT_SOURCES ?? "console")
     .split(",")
@@ -46,6 +48,17 @@ export function loadAvatarConfig(): AvatarConfig {
 
 export function loadPersona(): string {
   return readFileSync(rootPath("config/persona.md"), "utf8").trim();
+}
+
+export function loadLore(): string {
+  const path = rootPath("config/lore.md");
+  if (!existsSync(path)) return "";
+  // Drop the filling-in instructions and any example text that wasn't replaced,
+  // so the AI never mistakes an example for a fact about her.
+  return readFileSync(path, "utf8")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/[（(]例[：:][^）)]*[）)]/g, "")
+    .trim();
 }
 
 export function loadBlocklist(): string[] {

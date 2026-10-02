@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Video renderer</title>
+    <link rel="icon" href="data:," />
+    <script src="/lib/live2dcubismcore.min.js"></script>
+    <script>
+      if (!window.Live2DCubismCore) {
+        document.write('<script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"><\/script>');
+      }
+    </script>
+    <style>
+      html, body { margin: 0; background: #000; overflow: hidden; }
+      canvas { display: block; }
+    </style>
+  </head>
+  <body>
+    <!-- Driven by `npm run video`: it calls window.studio.load() and then frame() for every frame. -->
+    <script type="module" src="./src/render.ts"></script>
+  </body>
+</html>

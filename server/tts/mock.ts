@@ -1,11 +1,13 @@
 // Offline stand-in voice: cheerful "babble" beeps, one per syllable, so you
 // can test lip sync and timing without internet or API keys.
 import type { AudioClip, TTSProvider } from "./index.ts";
-
-const SAMPLE_RATE = 24_000;
+import { SAMPLE_RATE, toWav } from "./wav.ts";
 
 export class MockTTS implements TTSProvider {
   readonly name = "mock";
+
+  /** `pitch` 1 = her; lower for a narrator. */
+  constructor(private pitch = 1) {}
 
   async synthesize(text: string): Promise<AudioClip> {
     const samples: number[] = [];
@@ -31,32 +33,12 @@ export class MockTTS implements TTSProvider {
       }
       const syllables = /^[a-zA-Z]+$/.test(token) ? Math.max(1, Math.round(token.length / 3)) : 1;
       for (let s = 0; s < syllables; s++) {
-        pushSyllable(0.11 + Math.random() * 0.07, 260 + Math.random() * 120);
+        pushSyllable(0.11 + Math.random() * 0.07, (260 + Math.random() * 120) * this.pitch);
         pushSilence(0.03);
       }
     }
-    if (samples.length === 0) pushSyllable(0.3, 300);
+    if (samples.length === 0) pushSyllable(0.3, 300 * this.pitch);
     pushSilence(0.1);
     return { data: toWav(samples), mime: "audio/wav" };
   }
-}
-
-function toWav(samples: number[]): Buffer {
-  const data = Buffer.alloc(samples.length * 2);
-  samples.forEach((s, i) => data.writeInt16LE(Math.round(Math.max(-1, Math.min(1, s)) * 32767), i * 2));
-  const header = Buffer.alloc(44);
-  header.write("RIFF", 0);
-  header.writeUInt32LE(36 + data.length, 4);
-  header.write("WAVE", 8);
-  header.write("fmt ", 12);
-  header.writeUInt32LE(16, 16); // fmt chunk size
-  header.writeUInt16LE(1, 20); // PCM
-  header.writeUInt16LE(1, 22); // mono
-  header.writeUInt32LE(SAMPLE_RATE, 24);
-  header.writeUInt32LE(SAMPLE_RATE * 2, 28); // byte rate
-  header.writeUInt16LE(2, 32); // block align
-  header.writeUInt16LE(16, 34); // bits per sample
-  header.write("data", 36);
-  header.writeUInt32LE(data.length, 40);
-  return Buffer.concat([header, data]);
 }

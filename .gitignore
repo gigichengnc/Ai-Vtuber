@@ -12,3 +12,6 @@ public/lib/
 
 # Local data the brain writes (stream memory, logs).
 data/
+
+# Videos you render (they can be large).
+output/

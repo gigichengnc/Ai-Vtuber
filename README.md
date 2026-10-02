@@ -1,20 +1,28 @@
 # Ai-Vtuber
 
-An AI VTuber for YouTube. She reads your live chat, thinks of a reply with a
-free or cheap AI model, speaks it with a free voice, and her Live2D model
-moves, blinks, lip-syncs and changes expression on screen. OBS shows her
-through a web page.
+朝暮, an AI VTuber with a Live2D body. Two ways to use her:
+
+- **Videos** (`npm run video`): an AI writes a short script in her voice and
+  world, and she performs it: lines, faces, gestures, built-in meme stickers,
+  camera moves, captions, sound effects and subtitles. Out comes an MP4 in
+  9:16 (Shorts / Reels / 竖屏) or 16:9, ready to upload.
+- **Live** (`npm start`): she reads YouTube live chat and answers out loud,
+  shown in OBS.
 
 ```
-YouTube chat ─► AI brain (Ollama / Gemini / Groq) ─► voice (Edge TTS) ─► Live2D avatar page ─► OBS ─► YouTube Live
+Videos: topic ─► AI writer ─► script.json ─► voice ─► 朝暮 performs it frame by frame ─► video.mp4
+Live:   YouTube chat ─► AI brain ─► voice ─► Live2D avatar page ─► OBS ─► YouTube Live
 ```
 
-You don't need VTube Studio running: this app draws the model itself.
+The AI can be free (a local model with Ollama, or free tiers of Gemini/Groq),
+and so can the voice (Microsoft Edge voices, or your own cloned voice with
+GPT-SoVITS). You don't need VTube Studio running: this app draws the model
+itself.
 
 ## What you need
 
 - **Node.js 22 or newer**: https://nodejs.org (the "LTS" download).
-- **OBS Studio**: https://obsproject.com
+- **OBS Studio** (only for live mode): https://obsproject.com
 - **Your Live2D model folder** (the one VTube Studio uses).
 - **One AI option** (all have a free way in, see [Pick a brain](#pick-a-brain)).
 
@@ -26,7 +34,7 @@ Open a terminal (on Windows: PowerShell) and run:
 git clone https://github.com/gigichengnc/Ai-Vtuber.git
 cd Ai-Vtuber
 npm install
-npm run setup        # downloads the Live2D Cubism Core from live2d.com
+npm run setup        # downloads the Live2D Cubism Core and a browser for rendering videos
 ```
 
 **1. Add your model.** Copy your whole model folder into `models/`, so you get
@@ -38,19 +46,83 @@ The `models/` folder is ignored by git, so your model is never uploaded.
 **2. Make your settings file.** Copy `.env.example` to `.env` and choose a brain
 (below). Everything else can stay as it is to start.
 
-**3. Start it.**
+**3. Tell the AI who she is.** Fill in `config/lore.md` with 朝暮's world and
+story, and check `config/persona.md` (her personality and safety rules). The
+video writer follows these closely.
+
+**4. Try it.** Make a video:
 
 ```bash
-npm start
+npm run video
 ```
 
-Then open **http://localhost:8787/?panel** in your browser. You'll see her on
-the left and a control panel on the right. Click "Click to turn on sound" once,
-type in **Make her say**, and press **Say it**.
+Or start live mode with `npm start` and open **http://localhost:8787/?panel**:
+she appears on the left with a control panel on the right. Click "Click to
+turn on sound" once, type in **Make her say**, and press **Say it**.
+
+## Make videos
+
+```bash
+npm run video                                    # a POV short (9:16); the AI picks the topic
+npm run video -- --type skit                     # pov | skit | explainer
+npm run video -- --aspect landscape              # portrait (9:16) | landscape (16:9)
+npm run video -- --topic "叫你起床"               # give the AI a topic
+npm run video -- --write-only                    # write the script only, render later
+npm run video -- --script "output/<folder>/script.json"   # render a script you edited
+```
+
+Each video gets its own folder in `output/`:
+
+- `video.mp4`: the finished video (1080×1920 or 1920×1080, 30 fps).
+- `script.json`: what she does, beat by beat. Change any line, face, sticker
+  or caption and render it again with `--script`.
+- `subtitles.srt`: subtitles, if you'd rather add them in your editor.
+- `upload.txt`: title, description and tags for the upload page.
+
+Video types:
+
+- **pov**: she talks straight to you in an everyday moment from her world
+  (waking you up, good night, sulking, cheering you up), like the "起床啦"
+  style of shorts.
+- **skit**: a tiny story or meme with a twist and a punchline; can use a
+  narrator voice.
+- **explainer**: she explains something interesting in her own voice.
+
+The AI remembers past titles (`output/episodes.jsonl`) so it doesn't repeat
+ideas. Rendering happens in a hidden browser: a 45-second short takes a few
+minutes on a PC with a graphics card.
+
+**Backgrounds and music.** Put images in `assets/backgrounds/` (say
+`bedroom.jpg`) and the AI will use them where they fit; without images she
+gets soft colour gradients. Put music in `assets/music/` and name it in a
+script's `"music"` field. See `assets/README.md`.
+
+**What a beat can do** (in `script.json`): `say`, `speaker` (`main` or
+`narrator`), `emotion`, `motion`, `sticker` (her model's built-in effects:
+`angry_mark`, `question`, `sweat`, `tears`, `heart_eyes`, `star_eyes`,
+`money_eyes`, `spiral_eyes`, `gloom`, `blank_eyes`, `squint`, `puppy_mouth`),
+`camera` (`close`, `medium`, `wide`, `shake`), `caption`, `sfx` (`pop`,
+`ding`, `boing`, `whoosh`, `wobble`), `background`, `hold`, `pause`. Camera
+framings live in `config/avatar.json` under `cameras`.
+
+## Her voice
+
+- **Edge** (default, free): set `TTS_VOICE` in `.env`, e.g.
+  `zh-CN-XiaoyiNeural`, `zh-CN-XiaoxiaoNeural`, `zh-TW-HsiaoChenNeural`.
+- **Your own cloned voice with GPT-SoVITS** (free, on your PC): install
+  [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) (it has a Windows
+  package), start its API server (`api_v2.py`, port 9880), set
+  `TTS_PROVIDER=gpt-sovits`, and fill in `config/voice.json`. Give a short
+  reference clip (3 to 10 seconds) and its exact words for `default`, and
+  optionally one per emotion (`happy`, `angry`, `sleepy`...): an angry clip
+  makes her angry lines sound angry.
+- **Only clone a voice you have the rights to**: your own, or a voice actor
+  who agreed to it in writing. Never another VTuber's or anyone else's voice.
+- Narrator lines use `NARRATOR_VOICE` (an Edge voice).
 
 ## Pick a brain
 
-Set these three lines in `.env`. Any service with an "OpenAI-compatible" API
+Both the video writer and live chat use it. Set these three lines in `.env`. Any service with an "OpenAI-compatible" API
 works.
 
 | Option | Cost | Settings |
@@ -114,6 +186,8 @@ makes her speak, `/pause` and `/resume` work too.
 Edits to files in `config/` apply right away, no restart needed.
 
 - `config/persona.md`: her name, personality, and safety rules.
+- `config/lore.md`: her world and story; the video writer stays true to it.
+- `config/voice.json`: GPT-SoVITS reference clips, if you use a cloned voice.
 - `config/avatar.json`: which model to load, which expression each emotion uses,
   what each motion is (the descriptions help the AI pick), the default framing,
   and lip-sync strength (`mouth.gain`).
@@ -133,6 +207,13 @@ Edits to files in `config/` apply right away, no restart needed.
   `IDLE_TALK_SECONDS` or wait.
 - **Voice fails**: Edge TTS is a free, unofficial service and needs internet.
   Set `TTS_PROVIDER=mock` to test everything else with beeps.
+- **Video render can't start a browser**: run `npx playwright install
+  chromium`, or set `BROWSER_PATH` in `.env` to Chrome or Edge.
+- **Video render fails with a WebGL error**: set `RENDER_SOFTWARE_GL=1` (slow,
+  but works without a graphics card).
+- **The AI's script "wasn't valid JSON"**: small local models sometimes
+  struggle with long scripts; it retries 3 times. A bigger model, or Gemini or
+  Groq, helps.
 
 ## For developers
 
@@ -142,8 +223,9 @@ npm run typecheck
 npm test
 ```
 
-Layout: `server/` (web server, AI brain, voice, chat sources, moderation),
-`web/` (avatar page and control panel; PixiJS v8 +
+Layout: `server/` (web server, AI client and live brain, voice, chat sources,
+moderation), `video/` (script writer, checker, renderer, sound effects),
+`web/` (avatar page, control panel and video render page; PixiJS v8 +
 [untitled-pixi-live2d-engine](https://github.com/Untitled-Story/untitled-pixi-live2d-engine)),
 `shared/protocol.ts` (messages between them), `config/` (persona and avatar).
 
@@ -153,4 +235,6 @@ The Live2D Cubism Core is downloaded from Live2D by `npm run setup` and is
 covered by the [Live2D Proprietary Software License](https://www.live2d.com/eula/live2d-proprietary-software-license-agreement_en.html).
 If you earn money from the stream, check Live2D's SDK license terms on
 live2d.com for whether you need a publication license. Your model and its artwork belong to
-you and their creators; they are not part of this repository.
+you and their creators; they are not part of this repository. When you upload
+AI-made videos, label them as AI-generated where the platform asks (Bilibili
+and YouTube both have a setting for it).

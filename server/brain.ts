@@ -5,6 +5,7 @@
 // free/cheap online ones like Google Gemini, Groq, OpenRouter or DeepSeek.
 // See the LLM_* settings in .env.example.
 import type { AvatarConfig } from "../shared/protocol.ts";
+import { ChatClient, extractJson, LLMError } from "./llm.ts";
 import type { ChatMessage } from "./moderation.ts";
 
 export interface Line {
@@ -23,20 +24,20 @@ export interface BrainOptions {
 }
 
 const MAX_LINES = 3;
-const TIMEOUT_MS = 90_000; // local models on a slow PC can take a while
 
 const escape = (text: string) => text.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]!);
 
-export class BrainError extends Error {}
+/** Errors worth showing to the user as-is (bad key, AI not running...). */
+export { LLMError as BrainError };
 
 export class Brain {
   private system = "";
   private emotions = new Set<string>();
   private motions = new Set<string>();
-  /** Some APIs reject `response_format`; we stop sending it after the first refusal. */
-  private jsonMode = true;
+  private client: ChatClient;
 
   constructor(private options: BrainOptions) {
+    this.client = new ChatClient(options);
     this.configure(options.persona, options.avatar);
   }
 
@@ -96,7 +97,7 @@ To stay quiet, reply: {"lines": []}`;
             .join("\n");
     const user = `<transcript>\n${escape(transcript.join("\n")) || "(stream just started)"}\n</transcript>\n\n<new_chat>\n${newChat}\n</new_chat>`;
 
-    const reply = await this.complete(user);
+    const reply = await this.client.complete(this.system, user);
     const lines = parseLines(reply);
     if (lines === null) {
       this.options.log(`The AI's answer wasn't valid JSON, skipping it: ${reply.slice(0, 160)}`);
@@ -108,86 +109,12 @@ To stay quiet, reply: {"lines": []}`;
       motion: line.motion && this.motions.has(line.motion) ? line.motion : undefined,
     }));
   }
-
-  private async complete(user: string): Promise<string> {
-    const { baseUrl, apiKey, model, log } = this.options;
-    const url = `${baseUrl.replace(/\/+$/, "")}/chat/completions`;
-    const body = {
-      model,
-      messages: [
-        { role: "system", content: this.system },
-        { role: "user", content: user },
-      ],
-      temperature: 0.8,
-      max_tokens: 800,
-      ...(this.jsonMode ? { response_format: { type: "json_object" } } : {}),
-    };
-
-    let response: Response;
-    try {
-      response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
-        },
-        body: JSON.stringify(body),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      });
-    } catch (error) {
-      const local = /localhost|127\.0\.0\.1/.test(baseUrl);
-      throw new BrainError(
-        local
-          ? `Couldn't reach the local AI at ${baseUrl}. Is Ollama running? (${String(error)})`
-          : `Couldn't reach the AI at ${baseUrl} (${String(error)})`,
-      );
-    }
-
-    if (response.status === 400 && this.jsonMode) {
-      // Retry once without JSON mode; the prompt already asks for JSON.
-      this.jsonMode = false;
-      log("This AI API doesn't accept JSON mode; continuing without it.");
-      return this.complete(user);
-    }
-    if (!response.ok) {
-      const detail = (await response.text()).slice(0, 300);
-      throw new BrainError(describeStatus(response.status, model, detail));
-    }
-
-    const data = (await response.json()) as {
-      choices?: { message?: { content?: string | null } }[];
-      usage?: { prompt_tokens?: number; completion_tokens?: number };
-    };
-    if (data.usage) log(`AI (${model}): ${data.usage.prompt_tokens ?? "?"} tokens in, ${data.usage.completion_tokens ?? "?"} out`);
-    return data.choices?.[0]?.message?.content ?? "";
-  }
 }
 
-function describeStatus(status: number, model: string, detail: string): string {
-  if (status === 401 || status === 403) return `The AI API rejected the key (HTTP ${status}). Check LLM_API_KEY in .env. ${detail}`;
-  if (status === 404) return `The AI API says model "${model}" or the URL doesn't exist (HTTP 404). Check LLM_MODEL and LLM_BASE_URL. ${detail}`;
-  if (status === 429) return `The AI API is rate limiting (HTTP 429): free tiers allow only so many requests per minute/day. ${detail}`;
-  return `The AI API returned HTTP ${status}. ${detail}`;
-}
-
-/**
- * Pulls the lines out of the model's reply. Small local models sometimes wrap
- * JSON in thinking tags or code fences, so be forgiving. Null = unreadable.
- */
+/** Pulls the lines out of the model's reply. Null = unreadable. */
 export function parseLines(reply: string): Line[] | null {
-  const cleaned = reply
-    .replace(/<think>[\s\S]*?<\/think>/gi, "")
-    .replace(/```(?:json)?/gi, "")
-    .trim();
-  const start = cleaned.search(/[{[]/);
-  if (start === -1) return null;
-  const end = Math.max(cleaned.lastIndexOf("}"), cleaned.lastIndexOf("]"));
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(cleaned.slice(start, end + 1));
-  } catch {
-    return null;
-  }
+  const parsed = extractJson(reply);
+  if (parsed === null) return null;
 
   const list = Array.isArray(parsed)
     ? parsed
