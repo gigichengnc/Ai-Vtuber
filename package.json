@@ -2,7 +2,7 @@
   "name": "ai-vtuber",
   "version": "0.1.0",
   "private": true,
-  "description": "An AI VTuber that reads YouTube chat, talks with Claude, and drives a Live2D avatar for OBS.",
+  "description": "朝暮, an AI Live2D character: auto-written short videos (9:16 / 16:9) and live streams, with a free or local AI and voice.",
   "type": "module",
   "engines": {
     "node": ">=22"
