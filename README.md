@@ -46,9 +46,11 @@ The `models/` folder is ignored by git, so your model is never uploaded.
 **2. Make your settings file.** Copy `.env.example` to `.env` and choose a brain
 (below). Everything else can stay as it is to start.
 
-**3. Tell the AI who she is.** Fill in `config/lore.md` with 朝暮's world and
-story, and check `config/persona.md` (her personality and safety rules). The
-video writer follows these closely.
+**3. Tell the AI who she is.** Copy `config/lore.example.md` to
+`config/lore.md` and fill in 朝暮's world and story (or use the one made from
+your novel). `config/lore.md` is kept out of git so your story stays private.
+Also check `config/persona.md` (her personality and safety rules). Both the
+video writer and live chat follow these closely.
 
 **4. Try it.** Make a video:
 
@@ -186,7 +188,8 @@ makes her speak, `/pause` and `/resume` work too.
 Edits to files in `config/` apply right away, no restart needed.
 
 - `config/persona.md`: her name, personality, and safety rules.
-- `config/lore.md`: her world and story; the video writer stays true to it.
+- `config/lore.md`: her world and story (private, not in git; template in
+  `config/lore.example.md`). The AI stays true to it.
 - `config/voice.json`: GPT-SoVITS reference clips, if you use a cloned voice.
 - `config/avatar.json`: which model to load, which expression each emotion uses,
   what each motion is (the descriptions help the AI pick), the default framing,

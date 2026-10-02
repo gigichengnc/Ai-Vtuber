@@ -19,6 +19,8 @@ export interface BrainOptions {
   apiKey: string;
   model: string;
   persona: string;
+  /** Her world and story (config/lore.md). */
+  lore: string;
   avatar: AvatarConfig;
   log: (line: string) => void;
 }
@@ -38,17 +40,17 @@ export class Brain {
 
   constructor(private options: BrainOptions) {
     this.client = new ChatClient(options);
-    this.configure(options.persona, options.avatar);
+    this.configure(options.persona, options.lore, options.avatar);
   }
 
   /** Rebuild the instructions, e.g. after config/persona.md is edited. */
-  configure(persona: string, avatar: AvatarConfig): void {
+  configure(persona: string, lore: string, avatar: AvatarConfig): void {
     this.emotions = new Set(Object.keys(avatar.emotions));
     this.motions = new Set(Object.keys(avatar.motions));
     const motions = Object.entries(avatar.motions);
 
     this.system = `${persona}
-
+${lore ? `\n# Your world and story (stay true to this; never contradict it)\n\n${lore}\n` : ""}
 # Your faces and moves
 
 Every line you say comes with an emotion (your facial expression) and a motion

@@ -7,7 +7,7 @@ import { AudioStore } from "./audio-store.ts";
 import { Brain } from "./brain.ts";
 import { startConsoleChat } from "./chat/console.ts";
 import { startYouTubeChat } from "./chat/youtube.ts";
-import { loadAvatarConfig, loadBlocklist, loadPersona, rootPath, settings } from "./config.ts";
+import { loadAvatarConfig, loadBlocklist, loadLore, loadPersona, rootPath, settings } from "./config.ts";
 import { Hub } from "./hub.ts";
 import { Moderator } from "./moderation.ts";
 import { Stage } from "./stage.ts";
@@ -22,7 +22,7 @@ const audio = new AudioStore();
 const moderator = new Moderator(loadBlocklist());
 const tts = createTTS();
 const brain = settings.llm.baseUrl && settings.llm.model
-  ? new Brain({ ...settings.llm, persona, avatar: avatarConfig, log })
+  ? new Brain({ ...settings.llm, persona, lore: loadLore(), avatar: avatarConfig, log })
   : null;
 
 const hub = new Hub(onClientMessage, (send) => {
@@ -95,7 +95,7 @@ watch(fileURLToPath(rootPath("config")), () => {
       avatarConfig = loadAvatarConfig();
       persona = loadPersona();
       moderator.setBlocklist(loadBlocklist());
-      brain?.configure(persona, avatarConfig);
+      brain?.configure(persona, loadLore(), avatarConfig);
       hub.broadcast({ type: "config", avatar: avatarConfig, paused: stage.paused });
       log("Reloaded config/ files.");
     } catch (error) {

@@ -50,8 +50,15 @@ export function loadPersona(): string {
   return readFileSync(rootPath("config/persona.md"), "utf8").trim();
 }
 
-export function loadLore(): string {
+/** True once you have your own config/lore.md (it is kept out of git). */
+export function hasOwnLore(): boolean {
   const path = rootPath("config/lore.md");
+  return existsSync(path) && !readFileSync(path, "utf8").includes("（例：");
+}
+
+export function loadLore(): string {
+  const own = rootPath("config/lore.md");
+  const path = existsSync(own) ? own : rootPath("config/lore.example.md");
   if (!existsSync(path)) return "";
   // Drop the filling-in instructions and any example text that wasn't replaced,
   // so the AI never mistakes an example for a fact about her.

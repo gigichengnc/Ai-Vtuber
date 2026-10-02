@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import type { Aspect, Episode } from "../shared/episode.ts";
 import { ChatClient, extractJson } from "../server/llm.ts";
-import { loadAvatarConfig, loadBlocklist, loadLore, loadPersona, rootPath, settings } from "../server/config.ts";
+import { hasOwnLore, loadAvatarConfig, loadBlocklist, loadLore, loadPersona, rootPath, settings } from "../server/config.ts";
 import { Moderator } from "../server/moderation.ts";
 import { renderEpisode } from "./render.ts";
 import { checkEpisode } from "./script.ts";
@@ -71,9 +71,8 @@ function folderFor(title: string): string {
 
 async function newScript(): Promise<{ episode: Episode; dir: string }> {
   const lore = loadLore();
-  const lorePath = rootPath("config/lore.md");
-  if (!existsSync(lorePath) || readFileSync(lorePath, "utf8").includes("（例：")) {
-    log("Note: config/lore.md still has the example text. Fill in 朝暮's story there so the scripts match her world.\n");
+  if (!hasOwnLore()) {
+    log("Note: there's no config/lore.md yet. Copy config/lore.example.md to config/lore.md and fill in her story so the scripts match her world.\n");
   }
   const client = new ChatClient({ ...settings.llm, log });
   log(`Writing a ${type} script (${aspect}) with ${settings.llm.model}...`);

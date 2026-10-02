@@ -15,3 +15,7 @@ data/
 
 # Videos you render (they can be large).
 output/
+
+# Her story (from your novel) stays private: copy config/lore.example.md to
+# config/lore.md and fill it in.
+config/lore.md
