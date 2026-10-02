@@ -1,0 +1,4 @@
+# Words or phrases to block, one per line (not case sensitive).
+# A chat message containing any of these is dropped before the AI sees it,
+# and a reply containing any of these is never spoken.
+# Lines starting with # are ignored. Add your own below.

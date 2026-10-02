@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI VTuber</title>
+    <link rel="icon" href="data:," />
+    <!-- Live2D Cubism Core: local copy from `npm run setup`, else Live2D's CDN. -->
+    <script src="/lib/live2dcubismcore.min.js"></script>
+    <script>
+      if (!window.Live2DCubismCore) {
+        document.write('<script src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"><\/script>');
+      }
+    </script>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="subtitle" hidden></div>
+    <button id="unlock-audio" hidden>Click to turn on sound</button>
+    <div id="error" hidden></div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

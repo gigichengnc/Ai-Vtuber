@@ -1,0 +1,36 @@
+{
+  "model": "/models/zhaomu/朝暮_v6.model3.json",
+  "layout": { "zoom": 0.9, "x": 0.5, "y": 0.53 },
+  "defaultEmotion": "neutral",
+  "emotionHoldSeconds": 4,
+  "emotions": {
+    "neutral": "00_neutral.exp3",
+    "smile": "01_soft_smile.exp3",
+    "happy": "02_happy.exp3",
+    "laugh": "12_closed_eye_smile.exp3",
+    "shy": "03_shy.exp3",
+    "embarrassed": "04_embarrassed.exp3",
+    "confused": "05_confused.exp3",
+    "surprised": "06_surprised.exp3",
+    "sad": "07_sad.exp3",
+    "angry": "08_angry.exp3",
+    "sleepy": "09_sleepy.exp3",
+    "wink": "10_wink_left.exp3",
+    "pout": "13_pout.exp3"
+  },
+  "motions": {
+    "greet": { "group": "Act", "index": 0, "description": "wave hello, for greetings and goodbyes" },
+    "laugh": { "group": "Act", "index": 1, "description": "lean and laugh at something funny" },
+    "finger_heart": { "group": "Act", "index": 2, "description": "make a finger heart, to thank someone or show love" },
+    "surprised_shy": { "group": "Act", "index": 3, "description": "startled then shy, for compliments or surprises" },
+    "showcase": { "group": "Act", "index": 4, "description": "show off her outfit" },
+    "pout": { "group": "Act", "index": 5, "description": "pout, when teased or annoyed" },
+    "talk_intro": { "group": "Act", "index": 6, "description": "lively gesture while introducing herself or a topic" },
+    "showcase_talk": { "group": "Act", "index": 7, "description": "gesture while explaining something" },
+    "expression_show": { "group": "Act", "index": 8, "description": "cycle through faces, playful" },
+    "lively_show": { "group": "Act", "index": 9, "description": "energetic, excited movement" },
+    "song_show": { "group": "Act", "index": 10, "description": "sway like singing" }
+  },
+  "loops": [{ "group": "Shark", "index": 0 }],
+  "mouth": { "parameter": "ParamMouthOpenY", "gain": 1.6, "smoothing": 0.45 }
+}
