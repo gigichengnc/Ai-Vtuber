@@ -21,7 +21,7 @@ export class Panel {
       <div class="row"><button id="pause" class="danger">Stop talking (panic)</button></div>
 
       <h2>Make her say</h2>
-      <textarea id="say-text" placeholder="大家好！我是之之～"></textarea>
+      <textarea id="say-text" placeholder="大家好！我是朝暮～"></textarea>
       <div class="row">
         <select id="say-emotion"></select>
         <select id="say-motion"></select>

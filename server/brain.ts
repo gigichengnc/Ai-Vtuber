@@ -1,5 +1,5 @@
 // The AI: reads the recent stream transcript plus new chat, and decides what
-// 之之 says next, with a facial expression and an optional gesture per line.
+// 朝暮 says next, with a facial expression and an optional gesture per line.
 //
 // Works with any "OpenAI-compatible" chat API: a local model in Ollama, or
 // free/cheap online ones like Google Gemini, Groq, OpenRouter or DeepSeek.
