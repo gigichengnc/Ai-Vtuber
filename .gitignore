@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+
+# Live2D model files are NOT committed: this repo is public, and the model is
+# your own artwork. Put the model folder in models/ on your machine.
+models/*
+!models/README.md
+
+# Live2D Cubism Core is downloaded by `npm run setup` (Live2D's license).
+public/lib/
+
+# Local data the brain writes (stream memory, logs).
+data/

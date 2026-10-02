@@ -1,0 +1,32 @@
+{
+  "name": "ai-vtuber",
+  "version": "0.1.0",
+  "private": true,
+  "description": "An AI VTuber that reads YouTube chat, talks with Claude, and drives a Live2D avatar for OBS.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "setup": "node scripts/setup-core.mjs",
+    "start": "tsx server/main.ts",
+    "dev": "tsx watch --exclude './web/**' server/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
+    "msedge-tts": "^2.0.8",
+    "pixi.js": "^8.22.0",
+    "untitled-pixi-live2d-engine": "^1.4.0",
+    "vite": "^8.3.2",
+    "ws": "^8.22.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
