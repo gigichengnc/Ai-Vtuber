@@ -1,0 +1,53 @@
+name: Render animation
+
+on:
+  push:
+    paths:
+      - 'animation/**'
+      - 'episodes/**'
+      - 'requirements.txt'
+      - '.github/workflows/render.yml'
+  workflow_dispatch:
+    inputs:
+      episode:
+        description: Storyboard to render (leave empty for every file in episodes/)
+        default: ''
+      scale:
+        description: Resolution scale (1 = 1280x720, 1.5 = 1920x1080)
+        default: '1'
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install ffmpeg, cairo and a Chinese font
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ffmpeg fonts-wqy-zenhei libcairo2-dev pkg-config
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Render episodes
+        env:
+          EPISODE: ${{ inputs.episode }}
+          SCALE: ${{ inputs.scale || '1' }}
+        run: |
+          if [ -n "$EPISODE" ]; then files="$EPISODE"; else files=$(ls episodes/*.yaml); fi
+          for f in $files; do
+            python -m animation.render "$f" --scale "$SCALE"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rendered-videos
+          path: output/*.mp4
+          if-no-files-found: error

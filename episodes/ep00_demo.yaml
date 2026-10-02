@@ -1,0 +1,84 @@
+# Storyboard for a short demo episode.
+# Times are in seconds. `at`/`end` inside a shot are relative to the start of that shot.
+# Scenes available: city_establish, rooftop_girl, spirit_arrives, transformation
+# Faces: neutral, surprised, happy, determined (girl) / happy, serious (fox)
+# Sound effects: twinkle, shooting_star, pop, surprise, charge, flash, reveal
+
+title:
+  zh: 月下契约
+  en: MOONLIT PACT · EPISODE 00 (DEMO)
+end_card:
+  zh: 第00话 · 完
+  en: To be continued…
+watermark: code-animated demo · rendered by GitHub Actions
+fps: 24
+music: true
+
+characters:
+  yue:
+    name: 小月
+    color: "#ffb3d9"
+    voice_pitch: 620
+  kitsu:
+    name: 狐灵
+    color: "#9fe6ff"
+    voice_pitch: 440
+
+shots:
+  - scene: city_establish
+    duration: 4.0
+    fade_in: 0.8
+    sfx:
+      - {at: 1.6, sound: shooting_star}
+
+  - scene: rooftop_girl
+    duration: 5.5
+    sfx:
+      - {at: 0.5, sound: twinkle}
+    dialogue:
+      - who: yue
+        at: 0.8
+        end: 4.9
+        zh: 又是这个梦……星星在呼唤我吗？
+        en: This dream again... are the stars calling to me?
+
+  - scene: spirit_arrives
+    duration: 7.0
+    sfx:
+      - {at: 0.3, sound: shooting_star}
+      - {at: 1.8, sound: pop}
+      - {at: 3.6, sound: surprise}
+    dialogue:
+      - who: kitsu
+        at: 2.0
+        end: 3.5
+        face: happy
+        zh: 终于找到你了，我的契约者！
+        en: Found you at last, my contractor!
+      - who: yue
+        at: 3.6
+        end: 5.0
+        face: surprised
+        zh: 诶？！狐、狐狸在说话？！
+        en: Eh?! A t-talking fox?!
+      - who: kitsu
+        at: 5.1
+        end: 6.9
+        face: serious
+        zh: 借你的身体一用——变身吧！
+        en: Lend me your body — now, transform!
+
+  - scene: transformation
+    duration: 8.5
+    fade_out: 1.0
+    sfx:
+      - {at: 0.2, sound: twinkle}
+      - {at: 1.6, sound: charge}
+      - {at: 3.6, sound: flash}
+      - {at: 4.0, sound: reveal}
+    dialogue:
+      - who: yue
+        at: 4.6
+        end: 6.4
+        zh: 月下契约，成立——！
+        en: The Moonlit Pact... is sealed!
