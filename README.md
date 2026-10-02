@@ -1,11 +1,13 @@
 # Ai-Vtuber
 
-朝暮, an AI VTuber with a Live2D body. Two ways to use her:
+朝暮 (Zhaomu), a character IP with a Live2D body and her own story. Two ways
+to use her:
 
 - **Videos** (`npm run video`): an AI writes a short script in her voice and
-  world, and she performs it: lines, faces, gestures, built-in meme stickers,
-  camera moves, captions, sound effects and subtitles. Out comes an MP4 in
-  9:16 (Shorts / Reels / 竖屏) or 16:9, ready to upload.
+  world, a second AI pass checks it against her canon, and she performs it:
+  lines, faces, gestures, built-in meme stickers, camera moves, captions,
+  sound effects and subtitles. Out comes an MP4 in 9:16 (Shorts / Reels) or
+  16:9, ready to upload. She speaks British English by default.
 - **Live** (`npm start`): she reads YouTube live chat and answers out loud,
   shown in OBS.
 
@@ -73,6 +75,17 @@ npm run video -- --write-only                    # write the script only, render
 npm run video -- --script "output/<folder>/script.json"   # render a script you edited
 ```
 
+Before anything is rendered, a **continuity check** (a second AI pass) reads
+the script against `config/lore.md` and `config/persona.md`: names, places,
+the timeline, her and 晝霽's habits, safety rules and language. If it finds
+problems, the writer gets them as notes and tries again, up to 3 drafts. If
+no draft passes, nothing is rendered; the last draft and the problems are
+saved (`script.json`, `review.txt`) so you can fix it and render with
+`--script`. `--skip-review` turns the check off.
+
+Each video picks a point in her story and shows it as a small label at the
+start (for example "Age 17 · the first rain").
+
 Each video gets its own folder in `output/`:
 
 - `video.mp4`: the finished video (1080×1920 or 1920×1080, 30 fps).
@@ -83,9 +96,8 @@ Each video gets its own folder in `output/`:
 
 Video types:
 
-- **pov**: she talks straight to you in an everyday moment from her world
-  (waking you up, good night, sulking, cheering you up), like the "起床啦"
-  style of shorts.
+- **pov**: she talks straight to you (the viewer, as a friend) in an
+  everyday moment from her world.
 - **skit**: a tiny story or meme with a twist and a punchline; can use a
   narrator voice.
 - **explainer**: she explains something interesting in her own voice.
@@ -109,8 +121,10 @@ framings live in `config/avatar.json` under `cameras`.
 
 ## Her voice
 
-- **Edge** (default, free): set `TTS_VOICE` in `.env`, e.g.
-  `zh-CN-XiaoyiNeural`, `zh-CN-XiaoxiaoNeural`, `zh-TW-HsiaoChenNeural`.
+- **Edge** (default, free): `TTS_VOICE=en-GB-LibbyNeural` (British). Other
+  British voices: `en-GB-SoniaNeural`, `en-GB-MaisieNeural`. Chinese ones work
+  too (`zh-CN-XiaoyiNeural`, `zh-TW-HsiaoChenNeural`, `zh-HK-HiuGaaiNeural`);
+  change `VIDEO_LANGUAGE` and the language line in `config/persona.md` to match.
 - **Your own cloned voice with GPT-SoVITS** (free, on your PC): install
   [GPT-SoVITS](https://github.com/RVC-Boss/GPT-SoVITS) (it has a Windows
   package), start its API server (`api_v2.py`, port 9880), set
@@ -120,7 +134,8 @@ framings live in `config/avatar.json` under `cameras`.
   makes her angry lines sound angry.
 - **Only clone a voice you have the rights to**: your own, or a voice actor
   who agreed to it in writing. Never another VTuber's or anyone else's voice.
-- Narrator lines use `NARRATOR_VOICE` (an Edge voice).
+- Narrator lines and 晝霽's short lines use `NARRATOR_VOICE` (an Edge voice;
+  `en-GB-RyanNeural` by default).
 
 ## Pick a brain
 
@@ -231,6 +246,23 @@ moderation), `video/` (script writer, checker, renderer, sound effects),
 `web/` (avatar page, control panel and video render page; PixiJS v8 +
 [untitled-pixi-live2d-engine](https://github.com/Untitled-Story/untitled-pixi-live2d-engine)),
 `shared/protocol.ts` (messages between them), `config/` (persona and avatar).
+
+## Running her as an IP
+
+Code can be public; the character's assets usually shouldn't be. Before
+earning money from her, make sure you have in writing:
+
+- the Live2D model's commercial-use rights (videos, monetization, merch,
+  edits) from its artist and rigger;
+- the voice actor's consent for commercial use, if you clone a voice;
+- your own records for the story (dated drafts), and maybe a trademark check
+  on her name.
+
+Keep `config/lore.md`, `models/` and voice clips out of public places (they
+are git-ignored here). Consider making this repository private if you want to
+version them too. AI-only content may get weaker copyright protection in
+some places, so keeping a human eye on what she publishes strengthens your
+claim as well as her consistency.
 
 ## Licenses
 

@@ -2,7 +2,7 @@
 // a script plus the voice clips, then asks for one frame at a time. Time only
 // moves when a frame is requested, so videos come out smooth at a steady 30 fps
 // however fast or slow the computer is.
-import { Application, Assets, Container, extensions, Sprite, Text, Texture } from "pixi.js";
+import { Application, Assets, Container, extensions, Graphics, Sprite, Text, Texture } from "pixi.js";
 import { Live2DPlugin } from "untitled-pixi-live2d-engine/cubism";
 import { BACKGROUNDS, type Beat, type Episode, FRAME_SIZE, type Timeline } from "../../shared/episode.ts";
 import type { AvatarConfig } from "../../shared/protocol.ts";
@@ -15,6 +15,7 @@ const LEAD_IN = 0.3;
 const TAIL = 0.7;
 const CAMERA_MOVE_SECONDS = 0.35;
 const SHAKE_SECONDS = 0.45;
+const WHEN_SECONDS = 4;
 const FONT = ["Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", "WenQuanYi Zen Hei", "sans-serif"];
 
 type Layout = AvatarConfig["layout"];
@@ -38,6 +39,7 @@ class Studio {
   private background = new Container();
   private caption!: Text;
   private subtitle!: Text;
+  private whenLabel!: Container;
   private beatIndex = -1;
   private camera = { from: { zoom: 1, x: 0.5, y: 0.5 }, to: { zoom: 1, x: 0.5, y: 0.5 }, start: -10 };
   private shakeStart = -10;
@@ -102,7 +104,8 @@ class Studio {
       },
     });
     this.subtitle.position.set(width / 2, height * (portrait ? 0.9 : 0.93));
-    this.app.stage.addChild(this.caption, this.subtitle);
+    this.whenLabel = this.makeWhenLabel(episode.when, portrait);
+    this.app.stage.addChild(this.caption, this.subtitle, this.whenLabel);
 
     await this.setBackground(episode.background ?? "sakura");
     this.clips = await Promise.all(clipUrls.map((url) => (url ? this.loadClip(url) : null)));
@@ -130,9 +133,33 @@ class Studio {
 
     this.updateCamera(t);
     this.updateCaption(t);
+    // The "when in her story" label: fade in, hold, fade out.
+    const fade = Math.min(t / 0.4, 1, Math.max(0, (WHEN_SECONDS - t) / 0.6));
+    this.whenLabel.alpha = Math.max(0, fade);
     this.avatar.model.update(1000 / FPS);
     this.app.renderer.render(this.app.stage);
     return this.app.canvas.toDataURL("image/jpeg", 0.92);
+  }
+
+  private makeWhenLabel(when: string | undefined, portrait: boolean): Container {
+    const box = new Container();
+    if (!when) return box;
+    const size = portrait ? 40 : 32;
+    const text = new Text({
+      text: when,
+      style: { fontFamily: FONT, fontSize: size, fontWeight: "600", fill: "#ffffff", letterSpacing: 1 },
+    });
+    const padX = size * 0.6;
+    const padY = size * 0.35;
+    const pill = new Graphics()
+      .roundRect(0, 0, text.width + padX * 2, text.height + padY * 2, (text.height + padY * 2) / 2)
+      .fill({ color: "#2a1830", alpha: 0.55 });
+    text.position.set(padX, padY);
+    box.addChild(pill, text);
+    const margin = this.app.screen.width * 0.05;
+    box.position.set(margin, this.app.screen.height * (portrait ? 0.045 : 0.06));
+    box.alpha = 0;
+    return box;
   }
 
   private planTimeline(): Timeline {

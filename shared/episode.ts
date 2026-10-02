@@ -51,6 +51,8 @@ export interface Episode {
   description?: string;
   tags?: string[];
   aspect: Aspect;
+  /** Where in her story this video is set, shown as a small label at the start (e.g. "Age 17 · the first autumn"). */
+  when?: string;
   /** Starting background (see Beat.background). */
   background?: string;
   /** Optional background music: a file name in assets/music/, played quietly on loop. */

@@ -1,9 +1,9 @@
 // The AI script writer: picks a topic that fits 朝暮's world and writes a
 // short video script she can perform (lines, faces, moves, stickers, camera,
 // captions, sound effects).
-import { type Aspect, BACKGROUNDS } from "../shared/episode.ts";
+import { type Aspect, BACKGROUNDS, type Episode } from "../shared/episode.ts";
 import type { AvatarConfig } from "../shared/protocol.ts";
-import { ChatClient } from "../server/llm.ts";
+import { type ChatClient, extractJson } from "../server/llm.ts";
 import { listAssets } from "./script.ts";
 import { SFX_NAMES } from "./sfx.ts";
 
@@ -37,7 +37,7 @@ export interface WriterOptions {
 
 export async function writeScript(
   o: WriterOptions,
-  request: { type: VideoType; aspect: Aspect; topic?: string; pastTitles: string[] },
+  request: { type: VideoType; aspect: Aspect; topic?: string; pastTitles: string[]; feedback?: string[] },
 ): Promise<string> {
   const motions = Object.entries(o.avatar.motions).map(([name, m]) => `${name} (${m.description ?? name})`);
   const images = listAssets("backgrounds");
@@ -55,12 +55,15 @@ You are writing a script for one of your own short videos (Bilibili / YouTube / 
 perform it as a Live2D character. Write in ${o.language}.
 
 What makes these videos good:
-- The first line grabs attention within 2 seconds. No slow intros, no "大家好我是朝暮" openers.
-- Each spoken line is short, one breath: at most about 25 Chinese characters (or 15 English words).
+- The first line grabs attention within 2 seconds. No slow intros like "Hi everyone, I'm Zhaomu".
+- Each spoken line is short, one breath: at most about 15 English words (or 25 Chinese characters).
 - Your face keeps changing with the feeling: pick an emotion on almost every beat.
 - Stickers, captions, sound effects and camera moves land on the funny or emotional peaks. Don't put
   something on every beat; contrast makes the peaks pop.
-- Captions are big meme text, 2 to 8 characters, not a copy of the line.
+- Captions are big meme text: 1 to 4 words (or 2 to 8 Chinese characters), not a copy of the line.
+- Pick when in your story this video takes place (any point on your timeline) and put a short label
+  for the screen in "when", e.g. "Age 17 · the first autumn" or "After the story · a quiet Wednesday".
+  Everything in the video must fit that moment: who you were then, where 晝霽 was, what had happened.
 - A clear ending: a callback, a twist, or a sweet sign-off in character. Don't beg for likes.
 - Stay in character and in your world. Nothing about real people, politics, or anything unsafe.
 
@@ -78,11 +81,11 @@ ${music.length ? `- top-level "music" (optional, played quietly): ${music.join("
 
 Reply with only a JSON object and nothing else, in this shape:
 {"title": "catchy video title", "description": "1-2 sentence video description", "tags": ["tag", "tag"],
- "background": "sakura",
+ "when": "Age 21 · the week he came back", "background": "sakura",
  "beats": [
-  {"say": "喂！你怎么还在睡！", "emotion": "angry", "sticker": "angry_mark", "camera": "close", "caption": "起床！！", "sfx": "pop"},
-  {"say": "什么？再睡五分钟？", "emotion": "confused", "sticker": "question", "camera": "medium"},
-  {"emotion": "pout", "motion": "pout", "hold": 0.8, "sfx": "boing"}
+  {"say": "Right. Who told you to bring a brolly that small?", "emotion": "pout", "sticker": "sweat", "camera": "close", "caption": "TINY", "sfx": "pop"},
+  {"say": "Your whole right shoulder is soaked. Again.", "emotion": "confused", "sticker": "question", "camera": "medium"},
+  {"emotion": "shy", "motion": "surprised_shy", "hold": 0.8, "sfx": "boing"}
  ]}`;
 
   const user = `Video type: ${VIDEO_TYPES[request.type]}
@@ -97,5 +100,56 @@ ${
     : "This is your first video."
 }`;
 
-  return o.client.complete(system, user, { maxTokens: 4000, temperature: 0.9 });
+  const fixes = request.feedback?.length
+    ? `\n\nYour previous draft was rejected by the continuity editor for these problems. Write a new script that avoids them:\n${request.feedback.map((p) => `- ${p}`).join("\n")}`
+    : "";
+  return o.client.complete(system, user + fixes, { maxTokens: 4000, temperature: 0.9 });
+}
+
+export interface Review {
+  ok: boolean;
+  problems: string[];
+}
+
+/**
+ * A second AI pass that protects the character: checks a script against her
+ * canon and voice before anything is rendered.
+ */
+export async function reviewScript(o: WriterOptions, episode: Episode): Promise<Review> {
+  const system = `You are the continuity editor for the character IP 朝暮 (Zhaomu). You protect her canon and her voice.
+
+# Canon
+
+${o.lore}
+
+# Her character and rules
+
+${o.persona}
+
+# Your job
+
+Read one video script (JSON) and list only real problems:
+- contradictions with the canon: names (use the English names from the canon), places, the timeline
+  (who was where and when, whether they were together yet), habits and preferences;
+- lines that are out of character for her or for 晝霽;
+- anything unsafe or off-brand under her safety rules;
+- spoken lines or captions not written in ${o.language};
+- a missing "when", or lines that don't fit that moment in her story.
+Ignore matters of taste and small creative details that don't contradict the canon.
+
+Reply with only a JSON object:
+{"ok": true, "problems": []}
+or
+{"ok": false, "problems": ["beat 3: ...", "when: ..."]}`;
+
+  const reply = await o.client.complete(system, JSON.stringify(episode, null, 1), { maxTokens: 1500, temperature: 0.2 });
+  const parsed = extractJson(reply);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return { ok: false, problems: ["The continuity check's reply couldn't be read."] };
+  }
+  const result = parsed as { ok?: unknown; problems?: unknown };
+  const problems = Array.isArray(result.problems)
+    ? result.problems.filter((p): p is string => typeof p === "string" && p.trim() !== "").slice(0, 10)
+    : [];
+  return { ok: result.ok !== false && problems.length === 0, problems };
 }

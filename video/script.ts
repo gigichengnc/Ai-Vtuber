@@ -84,6 +84,7 @@ export function checkEpisode(raw: unknown, avatar: AvatarConfig, moderator: Mode
     description: str(obj.description, 1000),
     tags: Array.isArray(obj.tags) ? obj.tags.map((t) => str(t, 30)).filter((t): t is string => !!t).slice(0, 12) : undefined,
     aspect: aspect ?? (obj.aspect === "landscape" ? "landscape" : "portrait"),
+    when: str(obj.when, 60),
     background: background && validBackground(background, images) ? background : undefined,
     music: music && listAssets("music").includes(music) ? music : undefined,
     beats,

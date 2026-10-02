@@ -23,13 +23,13 @@ export const settings = {
     model: env("LLM_MODEL", "qwen3:8b"),
   },
   idleTalkSeconds: number("IDLE_TALK_SECONDS", 60),
-  videoLanguage: env("VIDEO_LANGUAGE", "Simplified Chinese (简体中文)"),
+  videoLanguage: env("VIDEO_LANGUAGE", "British English (UK spelling and phrasing)"),
   tts: {
     provider: env("TTS_PROVIDER", "edge"),
-    voice: env("TTS_VOICE", "zh-CN-XiaoyiNeural"),
+    voice: env("TTS_VOICE", "en-GB-LibbyNeural"),
     rate: env("TTS_RATE", "+0%"),
     pitch: env("TTS_PITCH", "+0Hz"),
-    narratorVoice: env("NARRATOR_VOICE", "zh-CN-YunxiNeural"),
+    narratorVoice: env("NARRATOR_VOICE", "en-GB-RyanNeural"),
   },
   chatSources: (process.env.CHAT_SOURCES ?? "console")
     .split(",")
